@@ -29,7 +29,7 @@ var bot = new builder.UniversalBot(connector, function (session) {
 		console.log("in if");
 
 		session.send({
-            text: "YOU SENT:",
+            text: "NAGRAJ SENT:",
             attachments: [
                 {
                     contentType: attachment.contentType,
@@ -41,7 +41,7 @@ var bot = new builder.UniversalBot(connector, function (session) {
 
 	} else {
 		console.log("in else");
-		session.send("Nagraj said: %s", session.message.text);
+		session.send("Nagraj & Team said: %s", session.message.text);
 	}
 
 });
