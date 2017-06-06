@@ -19,9 +19,9 @@ server.post('/api/messages', connector.listen());
 // Receive messages from the user and respond by echoing each message back (prefixed with 'You said:')
 var bot = new builder.UniversalBot(connector, function (session) {
 
-    session.send("Nagraj said: %s", session.message.text);
 	
 	var msg = session.message
+
 	if (msg.attachments && msg.attachments.length > 0) {
 		
 		var attachment = msg.attachments[0];
@@ -37,6 +37,9 @@ var bot = new builder.UniversalBot(connector, function (session) {
             ]
         });
 
+	} else {
+
+		session.send("Nagraj said: %s", session.message.text);
 	}
 
 });
