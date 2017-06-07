@@ -2,7 +2,7 @@ var restify = require('restify');
 var builder = require('botbuilder');
 // We need this to build our post string
 var querystring = require('querystring');
-var http = require('http');
+var https = require('https');
 
 // Setup Restify Server
 var server = restify.createServer();
@@ -28,8 +28,11 @@ var bot = new builder.UniversalBot(connector, function (session) {
 	var msg = session.message
 
 // POST data to language API 
- //  var jsonResponse = PostCode(msg.text);
-//   session.send(" Response from language API" + jsonResponse);
+   var jsonResponse = PostCode(msg.text,session);
+    // create function to only use jsonResponse when the function finishes
+    // becasue asycnchronous   
+
+// TODO send score botTenDB to get suggestions
 
 	if (msg.attachments && msg.attachments.length > 0) {
 		
@@ -58,10 +61,10 @@ var bot = new builder.UniversalBot(connector, function (session) {
 
 
 // Create POST data from user
-function PostCode(userInput) {
+function PostCode(userInput,session) {
 
   // Build the post string from an object
-  var post_data = querystring.stringify(
+  var post_data = JSON.stringify(
   {
   'documents': [
     {
@@ -72,36 +75,60 @@ function PostCode(userInput) {
   ]
 }
   );
+console.log("post data : "+post_data);
+
+console.log("set options");
+
 
 var options = {
-    host: 'https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment',
-    port: 80,
+    host: 'westus.api.cognitive.microsoft.com',
+    port: 443,
+    path:'/text/analytics/v2.0/sentiment',
     method: 'POST',
     headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(post_data)
+        'Ocp-Apim-Subscription-Key': '9339895ecd9b4701995ff6b7db31260e',
+        'Content-Type': 'application/json'
+       // 'Accept': 'application/json',
+      //  'Content-Length': Buffer.byteLength(post_data)
     }
 };
+console.log("set post request");
+var post_req = https.request(options, function(res) {
+    var body = '';
 
-var post_req = http.request(options, function(res) {
     res.setEncoding('utf8');
     res.on('data', function (chunk) {
         console.log("body: " + chunk);
+        body += chunk;
     });
 
-    request.on('end', function () {
-    var jsonObject = JSON.parse(data);            // parse API language response
+    res.on('error', function (error) {
+        console.log("Error: " + error.stack);
+    });
 
-    console.log("JSON response: " +jsonObject);
+    res.on('end', function () {
+    console.log("The returned data: " + body)
+    var jsonObject = JSON.parse(body);            // parse API language response
+
+    console.log("User score: " +jsonObject.documents[0]['score']);
+    console.log("Errors: " + jsonObject.documents.error);
     // TODO Send data to database
+
+    var score = jsonObject.documents[0]['score'];
+   session.send(" Score Response from language API: " + score);
     // TODO Get data from Database and send to user
     return jsonObject;
         });
 
 });
 
+console.log("write/send post data");
+
 // post the data
   post_req.write(post_data);
   post_req.end();
+
+
+
 }
 
