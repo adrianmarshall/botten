@@ -21,11 +21,10 @@ var connector = new builder.ChatConnector({
 server.post('/api/messages', connector.listen());
 
 // Receive messages from the user and respond by echoing each message back (prefixed with 'You said:')
-var bot = new builder.UniversalBot(connector, function (session) {
+var bot = new builder.UniversalBot(connector);
 
-     session.send("Say 'help' or something else...");
-     session.send("Hi... I'm the alarm bot sample. I can set new alarms or delete existing ones.");
-	
+bot.dialog('/language',function (session) {
+
 	var msg = session.message
 
     // create function to only use jsonResponse when the function finishes
@@ -33,6 +32,7 @@ var bot = new builder.UniversalBot(connector, function (session) {
 
 // TODO send score botTenDB to get suggestions
 
+    console.log('semantic input: ' + session.userData.semanticInput)
 	if (msg.attachments && msg.attachments.length > 0) {
 		
 		var attachment = msg.attachments[0];
@@ -55,10 +55,61 @@ var bot = new builder.UniversalBot(connector, function (session) {
 
 // POST data to language API 
         var jsonResponse = PostCode(msg.text,session);
-		session.send("Nagraj & Team said: %s", session.message.text);
 	}
 
 });
+
+bot.dialog('/', [
+    function (session, args, next) {
+        if (!session.userData.name) {
+            session.beginDialog('/profile');
+        } else {
+            next();
+        }
+    },
+    function (session, results) {
+        session.send('Hello %s!', session.userData.name);
+        session.beginDialog('/question1');
+       // session.beginDialog('/language');
+    }
+]);
+
+bot.dialog('/profile', [
+    function (session) {
+        builder.Prompts.text(session, 'Hi! What is your name?');
+    },
+    function (session, results) {
+        session.userData.name = results.response;
+        session.endDialog();
+    }
+]);
+
+bot.dialog('/question1', [
+    function (session) {
+        builder.Prompts.text(session, 'Okay '+session.userData.name+
+        '. Anything planned for the day?');
+    },
+    function (session, results) {
+        session.send('I see. Let me see if I can help make your day even better.');
+        session.userData.semanticInput = results.response + ' ';
+        session.endDialog();
+        session.beginDialog('/question2');
+    }
+]);
+
+
+bot.dialog('/question2', [
+    function (session) {
+        builder.Prompts.text(session, ' How would you describe your mood today?');
+    },
+    function (session, results) {
+
+        var previousInput =  session.userData.semanticInput;
+        session.userData.semanticInput = previousInput+' '+ results.response ;
+        session.endDialog();
+        session.beginDialog('/language');
+    }
+]);
 
 
 
@@ -77,9 +128,6 @@ function PostCode(userInput,session) {
   ]
 }
   );
-console.log("post data : "+post_data);
-
-console.log("set options");
 
 
 var options = {
@@ -94,7 +142,7 @@ var options = {
       //  'Content-Length': Buffer.byteLength(post_data)
     }
 };
-console.log("set post request");
+
 var post_req = https.request(options, function(res) {
     var body = '';
 
@@ -117,7 +165,6 @@ var post_req = https.request(options, function(res) {
     // TODO Send data to database
 
     var score = jsonObject.documents[0]['score'];
-   session.send(" Score Response from language API: " + score);
     // TODO Get data from Database and send to user
     GetEvents(score,session);
 
@@ -126,7 +173,6 @@ var post_req = https.request(options, function(res) {
 
 });
 
-console.log("write/send post data");
 
 // post the data
   post_req.write(post_data);
@@ -138,7 +184,7 @@ console.log("write/send post data");
 
 
 // Send data to Database
-// Create POST data from user
+
 function GetEvents(score,session) {
 
 var mood_host = 'bot-event-api.azurewebsites.net';
@@ -147,10 +193,18 @@ var mood_uri = '';
 
 if(score > 0.5){
 mood_uri = '/api/positiveMoodEvent'
+   session.send(" You seem pretty happy. Let me suggest something to keep your spirits going. ");
+
 }else{
     mood_uri= '/api/negativeMoodEvent';
+       session.send("hmmm.. Let me look something up that might lighten up your mood.");
+
 }
 
+// TODO get random number between 1-10
+var ranNum = Math.floor(Math.random() * 9) + 0 ;
+var hours= '48';            // The hours within range to look for 'i.e- set to 24 for tomorrow
+mood_uri = mood_uri+'s'+"?count=10&hours="+hours;
 
 console.log("set options");
 
@@ -171,20 +225,27 @@ var get_req = http.request(options, function(res) {
 
     res.setEncoding('utf8');
     res.on('data', function (chunk) {
-        console.log("body: " + chunk);
         body += chunk;
     });
 
     res.on('error', function (error) {
         console.log("Error: " + error.stack);
+        session.endConversation();
     });
 
     res.on('end', function () {
    
     var mydata = JSON.parse(body);
     console.log("The status: " + mydata.status);
-   session.send(" From Database: " + mydata.data.event_name);
-    // TODO Get data from Database and send to user
+    //  Get data from Database and send to user
+    var event = mydata.data[ranNum];        // random event
+
+    var date = new Date(event.start_time);
+    var messageToUser = event.event_name + " , Go here: " + event.event_url +
+    " , Starts at " + date.toString();     // TODO convert time from UTC
+
+   session.send("You should checkout this upcoming event: " + messageToUser);
+   session.endConversation();
     
    // return data;
         });
