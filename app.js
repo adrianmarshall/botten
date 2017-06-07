@@ -260,7 +260,7 @@ var get_req = http.request(options, function(res) {
 
    session.send("You should checkout this upcoming event: " + messageToUser);
   // session.endDialog();
-  session.endConversation();
+  session.reset('/preface');
     
    // return data;
         });
