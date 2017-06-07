@@ -1,5 +1,8 @@
 var restify = require('restify');
 var builder = require('botbuilder');
+// We need this to build our post string
+var querystring = require('querystring');
+var http = require('http');
 
 // Setup Restify Server
 var server = restify.createServer();
@@ -24,6 +27,10 @@ var bot = new builder.UniversalBot(connector, function (session) {
 	
 	var msg = session.message
 
+// POST data to language API 
+   var jsonResponse = PostCode(msg.text);
+   session.send(" Response from language API" + jsonResponse);
+
 	if (msg.attachments && msg.attachments.length > 0) {
 		
 		var attachment = msg.attachments[0];
@@ -47,3 +54,54 @@ var bot = new builder.UniversalBot(connector, function (session) {
 	}
 
 });
+
+
+
+// Create POST data from user
+function PostCode(userInput) {
+
+  // Build the post string from an object
+  var post_data = querystring.stringify(
+  {
+  'documents': [
+    {
+      'language': 'en',
+      'id': 'string',
+      'text': userInput
+    }
+  ]
+}
+  );
+
+var options = {
+    host: 'https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment',
+    port: 80,
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(post_data)
+    }
+};
+
+var post_req = http.request(options, function(res) {
+    res.setEncoding('utf8');
+    res.on('data', function (chunk) {
+        console.log("body: " + chunk);
+    });
+
+    request.on('end', function () {
+    var jsonObject = JSON.parse(data);            // parse API language response
+
+    console.log("JSON response: " +jsonObject);
+    // TODO Send data to database
+    // TODO Get data from Database and send to user
+    return jsonObject;
+        });
+
+});
+
+// post the data
+  post_req.write(post_data);
+  post_req.end();
+}
+
