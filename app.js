@@ -27,8 +27,6 @@ var bot = new builder.UniversalBot(connector, function (session) {
 	
 	var msg = session.message
 
-// POST data to language API 
-   var jsonResponse = PostCode(msg.text,session);
     // create function to only use jsonResponse when the function finishes
     // becasue asycnchronous   
 
@@ -53,6 +51,9 @@ var bot = new builder.UniversalBot(connector, function (session) {
 
 	} else {
 		console.log("in else");
+
+// POST data to language API 
+        var jsonResponse = PostCode(msg.text,session);
 		session.send("Nagraj & Team said: %s", session.message.text);
 	}
 
