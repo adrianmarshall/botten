@@ -259,7 +259,8 @@ var get_req = http.request(options, function(res) {
     " , Starts at " + date.toString();     // TODO convert time from UTC
 
    session.send("You should checkout this upcoming event: " + messageToUser);
-   session.endDialog();
+  // session.endDialog();
+  session.endConversation();
     
    // return data;
         });
