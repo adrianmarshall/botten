@@ -38,9 +38,9 @@ bot.dialog('/language',function (session) {
 		var attachment = msg.attachments[0];
 
 		console.log("in if");
-
+        sessions.send(" No pics please.")
 		session.send({
-            text: "NAGRAJ SENT:",
+            text: "Sending back:",
             attachments: [
                 {
                     contentType: attachment.contentType,
