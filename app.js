@@ -92,7 +92,7 @@ bot.dialog('/preface', [
     function (session, results) {
         session.send('okay, thanks for sharing that.');
         session.conversationData.semanticInput = results.response + ' ';
-        session.endDialog();
+        //session.endDialog();
         session.beginDialog('/question1');
     }
 ]);
