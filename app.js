@@ -120,7 +120,7 @@ bot.dialog('/question2', [
 
         var previousInput =  session.conversationData.semanticInput;
         session.conversationData.semanticInput = previousInput+' '+ results.response ;
-        session.endDialog();
+      //  session.endDialog();
         session.beginDialog('/language');
     }
 ]);
