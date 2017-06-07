@@ -3,6 +3,7 @@ var builder = require('botbuilder');
 // We need this to build our post string
 var querystring = require('querystring');
 var https = require('https');
+var http = require('http')
 
 // Setup Restify Server
 var server = restify.createServer();
@@ -118,6 +119,8 @@ var post_req = https.request(options, function(res) {
     var score = jsonObject.documents[0]['score'];
    session.send(" Score Response from language API: " + score);
     // TODO Get data from Database and send to user
+    GetEvents(score,session);
+
     return jsonObject;
         });
 
@@ -132,4 +135,67 @@ console.log("write/send post data");
 
 
 }
+
+
+// Send data to Database
+// Create POST data from user
+function GetEvents(score,session) {
+
+var mood_host = 'bot-event-api.azurewebsites.net';
+// Set mood uri based on sentiment score
+var mood_uri = '';
+
+if(score > 0.5){
+mood_uri = '/api/positiveMoodEvent'
+}else{
+    mood_uri= '/api/negativeMoodEvent';
+}
+
+
+console.log("set options");
+
+
+var options = {
+    host: mood_host,
+    port: 80,
+    path: mood_uri,
+    method: 'GET',
+    headers: {
+        'Content-Type': 'application/json'
+       // 'Accept': 'application/json',
+      //  'Content-Length': Buffer.byteLength(post_data)
+    }
+};
+var get_req = http.request(options, function(res) {
+    var body = '';
+
+    res.setEncoding('utf8');
+    res.on('data', function (chunk) {
+        console.log("body: " + chunk);
+        body += chunk;
+    });
+
+    res.on('error', function (error) {
+        console.log("Error: " + error.stack);
+    });
+
+    res.on('end', function () {
+   
+    var mydata = JSON.parse(body);
+    console.log("The status: " + mydata.status);
+   session.send(" From Database: " + mydata.data.event_name);
+    // TODO Get data from Database and send to user
+    
+   // return data;
+        });
+
+});
+
+  get_req.end();
+
+
+
+}
+
+
 
