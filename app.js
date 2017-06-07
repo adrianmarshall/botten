@@ -61,15 +61,15 @@ bot.dialog('/language',function (session) {
 
 bot.dialog('/', [
     function (session, args, next) {
-        if (!session.userData.name) {
+        if (!session.conversationData.name) {
             session.beginDialog('/profile');
         } else {
             next();
         }
     },
     function (session, results) {
-        session.send('Hello %s!', session.userData.name);
-        session.beginDialog('/question1');
+        session.send('Hello %s!', session.conversationData.name);
+        session.beginDialog('/preface');
        // session.beginDialog('/language');
     }
 ]);
@@ -79,19 +79,33 @@ bot.dialog('/profile', [
         builder.Prompts.text(session, 'Hi! What is your name?');
     },
     function (session, results) {
-        session.userData.name = results.response;
+        session.conversationData.name = results.response;
         session.endDialog();
     }
 ]);
 
+
+bot.dialog('/preface', [
+    function (session) {
+        builder.Prompts.text(session,'How are you doing?');
+    },
+    function (session, results) {
+        session.send('okay, thanks for sharing that.');
+        session.conversationData.semanticInput = results.response + ' ';
+        session.endDialog();
+        session.beginDialog('/question1');
+    }
+]);
+
+
+
 bot.dialog('/question1', [
     function (session) {
-        builder.Prompts.text(session, 'Okay '+session.userData.name+
-        '. Anything planned for the day?');
+        builder.Prompts.text(session,'Anything planned for the day?');
     },
     function (session, results) {
         session.send('I see. Let me see if I can help make your day even better.');
-        session.userData.semanticInput = results.response + ' ';
+        session.conversationData.semanticInput = results.response + ' ';
         session.endDialog();
         session.beginDialog('/question2');
     }
@@ -104,8 +118,8 @@ bot.dialog('/question2', [
     },
     function (session, results) {
 
-        var previousInput =  session.userData.semanticInput;
-        session.userData.semanticInput = previousInput+' '+ results.response ;
+        var previousInput =  session.conversationData.semanticInput;
+        session.conversationData.semanticInput = previousInput+' '+ results.response ;
         session.endDialog();
         session.beginDialog('/language');
     }
@@ -245,7 +259,7 @@ var get_req = http.request(options, function(res) {
     " , Starts at " + date.toString();     // TODO convert time from UTC
 
    session.send("You should checkout this upcoming event: " + messageToUser);
-   session.endConversation();
+   session.endDialog();
     
    // return data;
         });
