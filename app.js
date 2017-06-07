@@ -28,8 +28,8 @@ var bot = new builder.UniversalBot(connector, function (session) {
 	var msg = session.message
 
 // POST data to language API 
-   var jsonResponse = PostCode(msg.text);
-   session.send(" Response from language API" + jsonResponse);
+ //  var jsonResponse = PostCode(msg.text);
+//   session.send(" Response from language API" + jsonResponse);
 
 	if (msg.attachments && msg.attachments.length > 0) {
 		
